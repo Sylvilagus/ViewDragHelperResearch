@@ -28,14 +28,14 @@ class DraggableLayout1:RelativeLayout {
 
         override fun clampViewPositionHorizontal(child: View, left: Int, dx: Int): Int {
             val currentChild=mChildProperties[child.id]
-            return (mChildProperties.map { currentChild!!.collisionX(it.value,dx)?:dx }.
-                    min()?:dx)+child.left
+            val list=mChildProperties.map { currentChild!!.collisionX(it.value,dx)?:dx }
+            return ((if(dx>0)list.min()else list.max())?:dx)+child.left
         }
 
         override fun clampViewPositionVertical(child: View, top: Int, dy: Int): Int {
             val currentChild=mChildProperties[child.id]
-            return (mChildProperties.map { currentChild!!.collisionY(it.value,dy)?:dy }.
-                    min()?:dy)+child.top
+            val list=mChildProperties.map { currentChild!!.collisionY(it.value,dy)?:dy }
+            return ((if(dy>0)list.min()else list.max())?:dy)+child.top
         }
 
     }
@@ -73,38 +73,39 @@ class DraggableLayout1:RelativeLayout {
                 return null
             if(target.child.top<child.top-target.child.height||target.child.top>child.bottom)
                 return moveIntent
-            if(moveIntent>0){
-                val dist=target.child.left-child.right
-                if(moveIntent>dist)
-                    return dist
-                else
-                    return moveIntent
-            }else{
-                val dist=target.child.right-child.left
-                if(moveIntent<dist)
-                    return dist
-                else
-                    return moveIntent
+            if(child.right<=target.child.left&&moveIntent>0){
+                    val dist = target.child.left - child.right
+                    if (moveIntent > dist)
+                        return dist
             }
+            if(child.left>=target.child.right&&moveIntent<0) {
+                val dist = target.child.right - child.left
+                if (moveIntent < dist)
+                    return dist
+            }
+
+            return moveIntent
         }
         fun collisionY(target:ChildProperty,moveIntent:Int):Int?{
             if(target==this)
                 return null
             if(target.child.left<child.left-target.child.width||target.child.left>child.right)
                 return moveIntent
-            if(moveIntent>0){
-                val dist=target.child.top-child.bottom
-                if(moveIntent>dist)
-                    return dist
-                else
-                    return moveIntent
-            }else{
-                val dist=target.child.bottom-child.top
-                if(moveIntent<dist)
+            if(child.bottom<=target.child.top&&moveIntent>0) {
+                val dist = target.child.top - child.bottom
+                if (moveIntent > dist)
                     return dist
                 else
                     return moveIntent
             }
+            if(child.top>=target.child.bottom&&moveIntent<0) {
+                val dist = target.child.bottom - child.top
+                if (moveIntent < dist)
+                    return dist
+                else
+                    return moveIntent
+            }
+            return moveIntent
         }
     }
 }
