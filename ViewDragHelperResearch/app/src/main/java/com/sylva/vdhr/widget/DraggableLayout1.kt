@@ -15,8 +15,8 @@ class DraggableLayout1:RelativeLayout {
     private var mViewDragHelper:ViewDragHelper?=null
     private val mChildProperties = HashMap<Int,ChildProperty>()
     private val mCallback=object: ViewDragHelper.Callback() {
-        override fun tryCaptureView(child: View?, pointerId: Int): Boolean {
-            return true
+        override fun tryCaptureView(child: View, pointerId: Int): Boolean {
+            return mChildProperties[child.id]!!.type and ChildProperty.SELF_STEADY==0
         }
         override fun getViewHorizontalDragRange(child: View?): Int {
             return measuredWidth - child!!.measuredWidth
@@ -57,7 +57,7 @@ class DraggableLayout1:RelativeLayout {
     override fun onFinishInflate() {
         super.onFinishInflate()
         (0 until childCount).map { getChildAt(it) }.
-                forEach { mChildProperties.put(it.id, ChildProperty(it)) }
+                forEach { mChildProperties.put(it.id, ChildProperty(it,ChildProperty.SELF_STEADY)) }
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
@@ -67,7 +67,16 @@ class DraggableLayout1:RelativeLayout {
         mViewDragHelper!!.processTouchEvent(event)
         return true
     }
-    class ChildProperty(val child:View){
+    class ChildProperty(val child:View,val type:Int){
+        constructor(child:View):this(child,SELF_MOVEABLE or RELATION_STEADY)
+        companion object{
+            const val SELF_STEADY=0x1
+            const val SELF_MOVEABLE=0x2
+            const val SELF_ELASTIC=0x3
+            const val RELATION_STEADY=0x1 shl 4
+            const val RELATION_MOVEABLE=0x2 shl 4
+            const val RELATION_ELASTIC=0x3 shl 4
+        }
         fun collisionX(target:ChildProperty,moveIntent:Int):Int?{
             if(target==this)
                 return null
